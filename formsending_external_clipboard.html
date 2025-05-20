@@ -1,0 +1,387 @@
+﻿<!DOCTYPE html>
+
+<!-- Amazonリンクをランキング順位がついた状態で短縮してコピーできるようにし、ページ内リストに登録する-->
+<!-- AmazonのURLが特定の順番、かつスラッシュで区切られていることを利用しているので、URLの構造が変わった場合には動作しなくなる-->
+<!-- 業務内容が変わった場合、おそらくは正しく動作しなくなる-->
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Amazonランキングリンク短縮 + ダブルチェッカー v0.1</title>
+    <style>
+        /* CSSを書くところ */
+
+        .TextBox {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            margin-left: 4px;
+            margin-right: 4px;
+            height: 24px;
+            border: solid 1px #808080;
+        }
+        .LongTextBox {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            margin-left: 4px;
+            margin-right: 4px;
+            height: 24px;
+            width: 360px;
+            border: solid 1px #808080;
+        }
+        .MainTextBox {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            margin-left: 4px;
+            margin-right: 4px;
+            height: 480px;
+            width: 480px;
+            border: solid 1px #808080;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            font-size: 17px;
+        }
+
+            .toast.show {
+                visibility: visible;
+                animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+
+        .title {
+            font-size: 24px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+    </style>
+</head>
+
+<body onload="load();">
+
+    <!-- 実際に表示される領域 -->
+
+    <script>
+        // JavaScriptを書くところ
+
+
+
+        function load() {
+            // console.log('load');
+
+            // トースト通知
+            showToast('準備完了');
+
+            const text = document.querySelectorAll('.TextBox');
+            // console.log(text);
+            
+            text.forEach(
+                function (value) {
+                    value.addEventListener('mouseover', onmouseover, false);
+                    value.addEventListener('mouseleave', onmouseleave, false);
+                    value.addEventListener('click', onClick_copy, false);
+                }
+            );
+
+            const longtext = document.querySelectorAll('.LongTextBox');
+            // console.log(text);
+
+            longtext.forEach(
+                function (value) {
+                    value.addEventListener('mouseover', onmouseover, false);
+                    value.addEventListener('mouseleave', onmouseleave, false);
+                    value.addEventListener('click', onClick_copy, false);
+                }
+            );
+
+            const maintext = document.querySelectorAll('.MainTextBox');
+            // console.log(text);
+
+            maintext.forEach(
+                function (value) {
+                    value.addEventListener('mouseover', onmouseover, false);
+                    value.addEventListener('mouseleave', onmouseleave, false);
+                    value.addEventListener('click', onClick_copy, false);
+                }
+            );
+
+
+            var firstname_kann = document.getElementById('firstname_kann');
+            firstname_kann.addEventListener('change',concatenate_name_kann,false);
+            var lastname_kann = document.getElementById('lastname_kann');
+            lastname_kann.addEventListener('change', concatenate_name_kann, false);
+
+            var firstname_kata = document.getElementById('firstname_kata');
+            firstname_kata.addEventListener('change', concatenate_name_kata,false);
+            var lastname_kata = document.getElementById('lastname_kata');
+            lastname_kata.addEventListener('change',concatenate_name_kata,false);
+
+            var firstname_hira = document.getElementById('firstname_hira');
+            firstname_hira.addEventListener('change', concatenate_name_hira,false);
+            var lastname_hira = document.getElementById('lastname_hira');
+            lastname_hira.addEventListener('change', concatenate_name_hira,false);
+
+            var tel_shigai = document.getElementById('tel_shigai');
+            tel_shigai.addEventListener('change', concatenate_tel, false);
+            var tel_shinai = document.getElementById('tel_shinai');
+            tel_shinai.addEventListener('change', concatenate_tel,false);
+            var tel_kanyuu = document.getElementById('tel_kanyuu');
+            tel_kanyuu.addEventListener('change', concatenate_tel, false);
+
+            var zip_1 = document.getElementById('zip_1');
+            zip_1.addEventListener('change', concatenate_zip, false);
+            var zip_2 = document.getElementById('zip_2');
+            zip_2.addEventListener('change', concatenate_zip, false);
+
+
+            var address_todou = document.getElementById('address_todou');
+            address_todou.addEventListener('change', concatenate_address, false);
+            var address_shiku = document.getElementById('address_shiku');
+            address_shiku.addEventListener('change',concatenate_address, false);
+            var address_banchi = document.getElementById('address_banchi');
+            address_banchi.addEventListener('change', concatenate_address, false);
+            var address_buil = document.getElementById('address_buil');
+            address_buil.addEventListener('change', concatenate_address,false);
+
+
+
+
+
+            
+        }
+
+        // トースト通知(丸コピ)
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, 3000);
+        }
+
+        function onDragOver(e) {
+            console.log('ondragover');
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'link';
+
+        }
+
+        function onmouseover(e) {
+            this.select();
+            // console.log('マウスカーソルの進入を検知');
+        }
+
+        function onmouseleave(e) {
+            this.blur();
+            // console.log('マウスカーソルの離脱を検知');
+        }
+
+        async function onClick_copy(e) {
+
+            e.preventDefault();
+            this.select();
+            // console.log('クリックを検知');
+            if (this.value != '') {
+                try {
+                    await navigator.clipboard.writeText(this.value);
+                    // console.log('リンクをクリップボードにコピーしました');
+                    // トースト通知
+                    showToast('クリップボードにコピーしました');
+
+                } catch (err) {
+                    // console.error('リンクのコピーに失敗: ', err);
+                    // トースト通知
+                    showToast('コピーに失敗: ' + err);
+
+                }
+            }
+        }
+
+
+        function concatenate(symbol, text) {
+            return text[0] + symbol + text[1] + symbol + text[2] + symbol + text[3]; 
+        }
+
+        function concatenate_name_kann() {
+            var firstname_kann = document.getElementById('firstname_kann');
+            var lastname_kann = document.getElementById('lastname_kann');
+            var name_kann_nospace = document.getElementById('name_kann_nospace');
+            var name_kann_halfspace = document.getElementById('name_kann_halfspace');
+            var name_kann_fullspace = document.getElementById('name_kann_fullspace');
+
+            if (firstname_kann.value != '' && lastname_kann.value != '') {
+                name_kann_nospace.value = firstname_kann.value + lastname_kann.value;
+                name_kann_halfspace.value = firstname_kann.value + ' ' + lastname_kann.value;
+                name_kann_fullspace.value = firstname_kann.value + '　' + lastname_kann.value;
+            }
+        }
+
+        function concatenate_name_kata() {
+            var firstname_kata = document.getElementById('firstname_kata');
+            var lastname_kata = document.getElementById('lastname_kata');
+            var name_kata_nospace = document.getElementById('name_kata_nospace');
+            var name_kata_halfspace = document.getElementById('name_kata_halfspace');
+            var name_kata_fullspace = document.getElementById('name_kata_fullspace');
+
+            if (firstname_kata.value != '' && lastname_kata.value != '') {
+                name_kata_nospace.value = firstname_kata.value + lastname_kata.value;
+                name_kata_halfspace.value = firstname_kata.value + ' ' + lastname_kata.value;
+                name_kata_fullspace.value = firstname_kata.value + '　' + lastname_kata.value;
+            }
+        }
+
+        function concatenate_name_hira() {
+            var firstname_hira = document.getElementById('firstname_hira');
+            var lastname_hira = document.getElementById('lastname_hira');
+            var name_hira_nospace = document.getElementById('name_hira_nospace');
+            var name_hira_halfspace = document.getElementById('name_hira_halfspace');
+            var name_hira_fullspace = document.getElementById('name_hira_fullspace');
+
+            if (firstname_hira.value != '' && lastname_hira.value != '') {
+                name_hira_nospace.value = firstname_hira.value + lastname_hira.value;
+                name_hira_halfspace.value = firstname_hira.value + ' ' + lastname_hira.value;
+                name_hira_fullspace.value = firstname_hira.value + '　' + lastname_hira.value;
+            }
+        }
+
+        function concatenate_tel() {
+            var tel_shigai = document.getElementById('tel_shigai');
+            var tel_shinai = document.getElementById('tel_shinai');
+            var tel_kanyuu = document.getElementById('tel_kanyuu');
+            var tel_hyphen = document.getElementById('tel_hyphen');
+            var tel_nohyphen = document.getElementById('tel_nohyphen');
+
+            if (tel_shigai.value != '' && tel_shinai.value != '' && tel_kanyuu.value != '') {
+                tel_hyphen.value = tel_shigai.value + '-' + tel_shinai.value + '-' + tel_kanyuu.value;
+                tel_nohyphen.value = tel_shigai.value + tel_shinai.value + tel_kanyuu.value;
+            }
+
+        }
+
+        function concatenate_zip() {
+            var zip_1 = document.getElementById('zip_1');
+            var zip_2 = document.getElementById('zip_2');
+            var zip_hyphen = document.getElementById('zip_hyphen');
+            var zip_nohyphen = document.getElementById('zip_nohyphen');
+
+            if (zip_1.value != '' && zip_2.value != '') {
+                zip_hyphen.value = zip_1.value + '-' + zip_2.value;
+                zip_nohyphen.value = zip_1.value + zip_2.value;
+            }
+        }
+
+        function concatenate_address() {
+            var address_todou = document.getElementById('address_todou');
+            var address_shiku = document.getElementById('address_shiku');
+            var address_banchi = document.getElementById('address_banchi');
+            var address_buil = document.getElementById('address_buil');
+            var address_full = document.getElementById('address_full');
+            var address_minus_todou = document.getElementById('address_minus_todou');
+            var address_banchiika = document.getElementById('address_banchiika');
+
+            if (address_todou.value != '' && address_shiku.value != '' && address_banchi.value != '' && address_buil.value != '') {
+                address_full.value = address_todou.value + address_shiku.value + address_banchi.value + address_buil.value;
+                address_minus_todou.value = address_shiku.value + address_banchi.value + address_buil.value;
+                address_banchiika.value = address_banchi.value + address_buil.value;
+
+            }
+        }
+
+    </script>
+
+
+
+    <div class="title">フォーム送信作業用外部クリップボード v0.1</div>
+
+    <div>下のボックス群にフォームテンプレートを入力し、<br />ドラッグアンドドロップか、クリックでクリップボードにコピー</div>
+    <div>(※ボックスに文字を手入力した際、最初の数文字で確定されてしまう場合(「ｋあぶしきがいしゃ」「ｙあまだ」など)は、<br />[IMEを右クリック>設定>全般>予測入力]をオフにすると解決する場合がある)</div>
+
+    <hr />
+
+    <div><input id="companyname_kann" class="TextBox" type="text" placeholder="企業名"/><input id="companyname_kata" class="TextBox" type="text" placeholder="キギョウメイ"/><input id="companyname_hira" class="TextBox" type="text" placeholder="きぎょうめい"/></div>
+
+    <div><input id="departmentname" class="TextBox" type="text" placeholder="部署名"/><input id="postname" class="TextBox" type="text" placeholder="役職名" /></div>
+
+    <div>
+        <input id="firstname_kann" class="TextBox" type="text" placeholder="姓"/><input id="lastname_kann" class="TextBox" type="text" placeholder="名"/>
+    </div>
+    <div>
+        <input id="name_kann_nospace" class="TextBox" type="text" placeholder="姓名"/><input id="name_kann_halfspace" class="TextBox" type="text" placeholder="姓 名"/><input id="name_kann_fullspace" class="TextBox" type="text" placeholder="姓　名"/>
+    </div>
+
+    <div>
+        <input id="firstname_kata" class="TextBox" type="text" placeholder="セイ"/><input id="lastname_kata" class="TextBox" type="text" placeholder="メイ"/>
+    </div>
+    <div>
+        <input id="name_kata_nospace" class="TextBox" type="text" placeholder="セイメイ"/><input id="name_kata_halfspace" class="TextBox" type="text" placeholder="セイ メイ"/><input id="name_kata_fullspace" class="TextBox" type="text" placeholder="セイ　メイ"/>
+    </div>
+
+    <div>
+        <input id="firstname_hira" class="TextBox" type="text" placeholder="せい"/><input id="lastname_hira" class="TextBox" type="text" placeholder="めい"/>
+    </div>
+    <div>
+        <input id="name_hira_nospace" class="TextBox" type="text" placeholder="せいめい"/><input id="name_hira_halfspace" class="TextBox" type="text" placeholder="せい めい"/><input id="name_hira_fullspace" class="TextBox" type="text" placeholder="せい　めい"/>
+    </div>
+
+    <div><input id="mail" class="LongTextBox" type="text" placeholder="メールアドレス"/><input id="web" class="LongTextBox" type="text" placeholder="webアドレス"/></div>
+
+    <div><input id="tel_shigai" class="TextBox" type="text" placeholder="市外局番"/>-<input id="tel_shinai" class="TextBox" type="text" placeholder="市内局番"/>-<input id="tel_kanyuu" class="TextBox" type="text" placeholder="加入者番号"/></div>
+    <input id="tel_hyphen" class="TextBox" type="text" placeholder="XXX-YYYY-ZZZ"/><input id="tel_nohyphen" class="TextBox" type="text" placeholder="XXXYYYYZZZ"/>
+
+    <div><input id="zip_1" class="TextBox" type="text" placeholder="郵便番号上3桁"/>-<input id="zip_2" class="TextBox" type="text" placeholder="下4桁"/></div>
+    <input id="zip_hyphen" class="TextBox" type="text" placeholder="XXX-YYYY"/><input id="zip_nohyphen" class="TextBox" type="text" placeholder="XXXYYYY"/>
+
+    <div><input id="address_todou" class="TextBox" type="text" placeholder="都道府県"/><input id="address_shiku" class="TextBox" type="text" placeholder="市区町村"/><input id="address_banchi" class="TextBox" type="text" placeholder="番地"/><input id="address_buil" class="TextBox" type="text" placeholder="建物名"/></div>
+    <div><input id="address_full" class="LongTextBox" type="text" placeholder="全住所"/></div>
+    <div><input id="address_minus_todou" class="LongTextBox" type="text" placeholder="都道府県を除く"/></div>
+    <div><input id="address_banchiika" class="LongTextBox" type="text" placeholder="番地以下"/></div>
+
+    <div>
+        <input id="maintitle" class="LongTextBox" type="text" placeholder="件名"/>
+    </div>
+
+    <div>
+        <input id="maintext" class="MainTextBox" type="text" placeholder="本文"/>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+</body>
+
+</html>
